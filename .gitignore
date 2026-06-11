@@ -1,3 +1,9 @@
 node_modules/
 dist/
 *.tsbuildinfo
+
+# Local hackathon submission prep
+DEMO_SCRIPT.md
+README.ko.md
+SUBMISSION*.md
+assets/
