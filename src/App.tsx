@@ -51,6 +51,22 @@ type EvidenceFormValues = {
 
 const required = (value: unknown) => (value ? "" : "Required");
 
+const sourceQuestions: Record<EvidenceSource, string> = {
+  "Session": "What claim did the speaker make, and what evidence supported it?",
+  "Q&A": "What limitation, trade-off, or practical concern did this question reveal?",
+  "Sponsor Booth": "What real user problem does this tool solve best, and when is it not a good fit?",
+  "Hallway Conversation": "What did another attendee notice that you missed?",
+  "Reflection": "What next action would make this idea useful for your team this week?"
+};
+
+const sourceLabels: Record<EvidenceSource, string> = {
+  "Session": "Session",
+  "Q&A": "Q&A",
+  "Sponsor Booth": "Sponsor",
+  "Hallway Conversation": "Hallway",
+  "Reflection": "Reflection"
+};
+
 const FieldInput = (props: FieldRenderProps) => {
   const { validationMessage, label, visited, touched, modified, children, ...inputProps } = props;
 
@@ -101,14 +117,6 @@ const getSuggestedQuestion = (
   source: EvidenceSource | undefined,
   monster: Monster
 ) => {
-  const sourceQuestions: Record<EvidenceSource, string> = {
-    "Session": "What claim did the speaker make, and what evidence supported it?",
-    "Q&A": "What limitation, trade-off, or practical concern did this question reveal?",
-    "Sponsor Booth": "What real user problem does this tool solve best, and when is it not a good fit?",
-    "Hallway Conversation": "What did another attendee notice that you missed?",
-    "Reflection": "What next action would make this idea useful for your team this week?"
-  };
-
   return `${sourceQuestions[source || "Session"]} For ${monster.name}, listen for ${monster.weakness.toLowerCase()}.`;
 };
 
@@ -117,6 +125,7 @@ function App() {
   const [activeTab, setActiveTab] = useState(0);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [bossOpen, setBossOpen] = useState(false);
+  const [preferredSource, setPreferredSource] = useState<EvidenceSource>("Session");
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const selectedMonster = monsters.find(
@@ -148,6 +157,17 @@ function App() {
       bossResult: null
     }));
     setActiveTab(1);
+  };
+
+  const openEvidence = (source: EvidenceSource = preferredSource) => {
+    if (!selectedMonster) {
+      notify("Pick a monster first, then collect evidence.", "info");
+      setActiveTab(0);
+      return;
+    }
+
+    setPreferredSource(source);
+    setEvidenceOpen(true);
   };
 
   const addEvidence = (values: EvidenceFormValues) => {
@@ -189,6 +209,17 @@ function App() {
       notify("Team share summary copied.", "info");
     } catch {
       notify("Copy failed. Select the summary text manually.", "info");
+    }
+  };
+
+  const copySuggestedQuestion = async (source: EvidenceSource | undefined) => {
+    if (!selectedMonster) return;
+
+    try {
+      await navigator.clipboard.writeText(getSuggestedQuestion(source, selectedMonster));
+      notify("Suggested question copied.", "info");
+    } catch {
+      notify("Copy failed. Select the question text manually.", "info");
     }
   };
 
@@ -299,7 +330,7 @@ function App() {
           <Button
             themeColor="primary"
             disabled={!selectedMonster}
-            onClick={() => setEvidenceOpen(true)}
+            onClick={() => openEvidence()}
           >
             Add evidence
           </Button>
@@ -341,6 +372,32 @@ function App() {
         </div>
       </section>
 
+      <section className="interaction-coach" aria-label="Interaction prompts">
+        <div className="coach-copy">
+          <span>Interaction Coach</span>
+          <strong>Pick a source prompt before the conversation starts.</strong>
+          <p>
+            These prompts turn passive listening into better questions for sessions,
+            sponsors, and hallway conversations.
+          </p>
+        </div>
+        <div className="prompt-grid">
+          {(["Session", "Q&A", "Sponsor Booth", "Hallway Conversation"] as EvidenceSource[]).map(
+            (source) => (
+              <button
+                className={`prompt-card ${preferredSource === source ? "active" : ""}`}
+                key={source}
+                type="button"
+                onClick={() => openEvidence(source)}
+              >
+                <span>{sourceLabels[source]}</span>
+                <strong>{sourceQuestions[source]}</strong>
+              </button>
+            )
+          )}
+        </div>
+      </section>
+
       <TabStrip selected={activeTab} onSelect={(event) => setActiveTab(event.selected)}>
         <TabStripTab title="Hunt">
           <section className="tab-panel">
@@ -377,7 +434,7 @@ function App() {
                     </div>
                     <ProgressBar value={selectedHp || 0} max={100} label={() => `${selectedHp}% HP`} />
                     <div className="button-row">
-                      <Button themeColor="primary" onClick={() => setEvidenceOpen(true)}>
+                      <Button themeColor="primary" onClick={() => openEvidence()}>
                         Add evidence
                       </Button>
                       <Button
@@ -559,13 +616,27 @@ function App() {
       {evidenceOpen && selectedMonster && (
         <Dialog title={`Evidence for ${selectedMonster.name}`} onClose={() => setEvidenceOpen(false)}>
           <Form
-            initialValues={{ source: "Session" }}
+            initialValues={{ source: preferredSource }}
             onSubmit={(values) => addEvidence(values as EvidenceFormValues)}
             render={(formRenderProps) => (
               <FormElement className="evidence-form">
                 <Field name="source" label="Source" component={FieldSource} validator={required} />
                 <div className="suggested-question">
-                  <span>Suggested question to collect better evidence</span>
+                  <div className="suggested-question-heading">
+                    <span>Suggested question to collect better evidence</span>
+                    <Button
+                      fillMode="flat"
+                      size="small"
+                      type="button"
+                      onClick={() =>
+                        copySuggestedQuestion(
+                          formRenderProps.valueGetter("source") as EvidenceSource | undefined
+                        )
+                      }
+                    >
+                      Copy
+                    </Button>
+                  </div>
                   <p>
                     {getSuggestedQuestion(
                       formRenderProps.valueGetter("source") as EvidenceSource | undefined,
