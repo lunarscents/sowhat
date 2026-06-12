@@ -106,7 +106,7 @@ const getSuggestedQuestion = (
     "Q&A": "What limitation, trade-off, or practical concern did this question reveal?",
     "Sponsor Booth": "What real user problem does this tool solve best, and when is it not a good fit?",
     "Hallway Conversation": "What did another attendee notice that you missed?",
-    "Reflection": "What next action would make this hype useful for your team this week?"
+    "Reflection": "What next action would make this idea useful for your team this week?"
   };
 
   return `${sourceQuestions[source || "Session"]} For ${monster.name}, listen for ${monster.weakness.toLowerCase()}.`;
@@ -390,7 +390,7 @@ function App() {
                     </div>
                   </>
                 ) : (
-                  <p className="empty">Pick a hype monster to start collecting evidence.</p>
+                  <p className="empty">Pick an idea monster to start collecting evidence.</p>
                 )}
               </CardBody>
             </Card>
@@ -416,7 +416,7 @@ function App() {
             <Card className="result-card boss-card">
               <CardHeader>
                 <h2>Final Boss: So What?!</h2>
-                <p>Turn loot into a decision</p>
+                <p>Turn collected evidence into a decision</p>
               </CardHeader>
               <CardBody>
                 {state.bossResult ? (
@@ -460,7 +460,7 @@ function App() {
                     <div className="boss-orb">?!</div>
                     <p>
                       Collect three pieces of loot, then challenge the final boss
-                      to turn the conference buzz into a concrete action.
+                      to turn conference ideas into a concrete action.
                     </p>
                     <Button
                       themeColor="success"
@@ -521,7 +521,7 @@ function App() {
             <Card className="dashboard-card">
               <CardHeader>
                 <h2>Aggregate Signals</h2>
-                <p>Which hype topics produced practical loot</p>
+                <p>Which ideas produced practical loot</p>
               </CardHeader>
               <CardBody>
                 <Chart>
